@@ -9,6 +9,7 @@ from app.schemas.survey import (
     SurveyRead,
     SurveyUpdate,
 )
+from app.services.analytics_service import get_survey_analytics
 from app.services.survey_service import (
     create_survey,
     delete_survey,
@@ -98,6 +99,19 @@ def delete_survey_route(
     current_admin: Admin = Depends(get_current_admin),
 ):
     delete_survey(
+        db,
+        survey_id,
+        current_admin,
+    )
+
+
+@router.get("/{survey_id}/analytics")
+def get_survey_analytics_route(
+    survey_id: int,
+    db: Session = Depends(get_db),
+    current_admin: Admin = Depends(get_current_admin),
+):
+    return get_survey_analytics(
         db,
         survey_id,
         current_admin,
