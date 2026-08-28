@@ -1,17 +1,27 @@
 from fastapi import FastAPI
+from sqlalchemy import text
+
+from app.database import engine
 
 app = FastAPI(
-    title="My FastAPI Application",
-    description="Backend API for the dynamic survey application",
+    title="Survey API",
     version="1.0.0",
 )
 
 
 @app.get("/")
 def root():
-    return {"message": "Welcome to the FastAPI application!"}
+    return {"message": "Survey API is running"}
 
 
 @app.get("/health")
 def health_check():
     return {"status": "healthy"}
+
+
+@app.get("/database-health")
+def database_health():
+    with engine.connect() as connection:
+        result = connection.execute(text("SELECT 1"))
+
+        return {"database": "connected", "result": result.scalar()}
