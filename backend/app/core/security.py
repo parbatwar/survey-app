@@ -1,14 +1,10 @@
-"""
-Password hash garne, verify garne
-and JWT access token banaune
-"""
-
 from datetime import datetime, timedelta, timezone
 import os
 
-from jose import jwt
-from passlib.context import CryptContext
+import bcrypt
 from dotenv import load_dotenv
+from jose import jwt
+
 
 load_dotenv()
 
@@ -17,31 +13,38 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 if not SECRET_KEY:
-    raise ValueError("Secret key is not set")
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+    raise ValueError("SECRET_KEY is not set")
 
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    password_bytes = password.encode("utf-8")
+
+    hashed = bcrypt.hashpw(
+        password_bytes,
+        bcrypt.gensalt(),
+    )
+
+    return hashed.decode("utf-8")
 
 
 def verify_password(
     plain_password: str,
     hashed_password: str,
 ) -> bool:
-    return pwd_context.verify(
-        plain_password,
-        hashed_password,
+    return bcrypt.checkpw(
+        plain_password.encode("utf-8"),
+        hashed_password.encode("utf-8"),
     )
 
 
 def create_access_token(data: dict) -> str:
     payload = data.copy()
 
-    expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.now(timezone.utc) + timedelta(
+        minutes=ACCESS_TOKEN_EXPIRE_MINUTES
+    )
 
-    payload.update({"exp": expire})
+    payload["exp"] = expire
 
     return jwt.encode(
         payload,
