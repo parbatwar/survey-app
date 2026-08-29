@@ -9,7 +9,10 @@ import Admin from "./pages/Admin"
 import Login from "./pages/Login"
 import Register from "./pages/Register"
 import CreateSurvey from "./pages/CreateSurvey"
+import PublicSurvey from "./pages/PublicSurvey"
+import Analytics from "./pages/Analytics"
 import ProtectedRoute from "./components/ProtectedRoute"
+
 
 function App() {
   return (
@@ -49,14 +52,8 @@ function App() {
         />
 
         <Route
-          path="/admin/surveys/new"
-          element={
-            <ProtectedRoute>
-              <div className="p-8">
-                Create Survey Page
-              </div>
-            </ProtectedRoute>
-          }
+            path="/survey/:id"
+            element={<PublicSurvey />}
         />
 
         <Route
@@ -71,15 +68,14 @@ function App() {
         />
 
         <Route
-          path="/admin/surveys/:id/analytics"
-          element={
-            <ProtectedRoute>
-              <div className="p-8">
-                Analytics Page
-              </div>
-            </ProtectedRoute>
-          }
+            path="/admin/surveys/:id/analytics"
+            element={
+                <ProtectedRoute>
+                <Analytics />
+                </ProtectedRoute>
+            }
         />
+
       </Routes>
     </BrowserRouter>
   )
