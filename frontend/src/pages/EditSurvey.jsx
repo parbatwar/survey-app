@@ -1,5 +1,5 @@
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useEffect, useState } from "react"
+import { useNavigate, useParams } from "react-router-dom"
 
 import {
   DndContext,
@@ -29,18 +29,49 @@ const createQuestion = () => ({
 })
 
 
-function CreateSurvey() {
+function EditSurvey() {
+  const { id } = useParams()
   const navigate = useNavigate()
 
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
+  const [questions, setQuestions] = useState([])
 
-  const [questions, setQuestions] = useState([
-    createQuestion(),
-  ])
-
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
-  const [loading, setLoading] = useState(false)
+
+
+  useEffect(() => {
+    const fetchSurvey = async () => {
+      try {
+        setError("")
+
+        const response = await api.get(
+          `/admin/surveys/${id}`
+        )
+
+        const survey = response.data
+
+        setTitle(survey.title)
+        setDescription(
+          survey.description || ""
+        )
+        setQuestions(
+          survey.questions || []
+        )
+      } catch (error) {
+        setError(
+          error.response?.data?.detail ||
+            "Failed to load survey"
+        )
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchSurvey()
+  }, [id])
 
 
   const addQuestion = () => {
@@ -51,36 +82,46 @@ function CreateSurvey() {
   }
 
 
-  const removeQuestion = (id) => {
+  const removeQuestion = (
+    questionId
+  ) => {
     setQuestions((current) => {
-      const filtered = current.filter(
-        (question) => question.id !== id
-      )
+      const filtered =
+        current.filter(
+          (question) =>
+            question.id !== questionId
+        )
 
-      return filtered.map((question) => {
-        if (
-          question.condition?.question_id === id
-        ) {
-          return {
-            ...question,
-            condition: null,
+      return filtered.map(
+        (question) => {
+          if (
+            question.condition
+              ?.question_id ===
+            questionId
+          ) {
+            return {
+              ...question,
+              condition: null,
+            }
           }
-        }
 
-        return question
-      })
+          return question
+        }
+      )
     })
   }
 
 
   const updateQuestion = (
-    id,
+    questionId,
     field,
     value
   ) => {
     setQuestions((current) =>
       current.map((question) => {
-        if (question.id !== id) {
+        if (
+          question.id !== questionId
+        ) {
           return question
         }
 
@@ -113,6 +154,28 @@ function CreateSurvey() {
         return updatedQuestion
       })
     )
+
+    if (
+      field === "type" &&
+      value !== "single_choice"
+    ) {
+      setQuestions((current) =>
+        current.map((question) => {
+          if (
+            question.condition
+              ?.question_id ===
+            questionId
+          ) {
+            return {
+              ...question,
+              condition: null,
+            }
+          }
+
+          return question
+        })
+      )
+    }
   }
 
 
@@ -123,7 +186,9 @@ function CreateSurvey() {
   ) => {
     setQuestions((current) =>
       current.map((question) => {
-        if (question.id !== questionId) {
+        if (
+          question.id !== questionId
+        ) {
           return question
         }
 
@@ -142,7 +207,9 @@ function CreateSurvey() {
   }
 
 
-  const addOption = (questionId) => {
+  const addOption = (
+    questionId
+  ) => {
     setQuestions((current) =>
       current.map((question) =>
         question.id === questionId
@@ -163,26 +230,95 @@ function CreateSurvey() {
     questionId,
     optionIndex
   ) => {
+    const sourceQuestion =
+      questions.find(
+        (question) =>
+          question.id === questionId
+      )
+
+    const removedOption =
+      sourceQuestion?.options?.[
+        optionIndex
+      ]
+
     setQuestions((current) =>
       current.map((question) => {
-        if (question.id !== questionId) {
-          return question
+        if (
+          question.id === questionId
+        ) {
+          return {
+            ...question,
+            options:
+              question.options.filter(
+                (_, index) =>
+                  index !== optionIndex
+              ),
+          }
         }
 
-        return {
-          ...question,
-          options:
-            question.options.filter(
-              (_, index) =>
-                index !== optionIndex
-            ),
+        if (
+          question.condition
+            ?.question_id ===
+            questionId &&
+          question.condition
+            ?.value ===
+            removedOption
+        ) {
+          return {
+            ...question,
+            condition: null,
+          }
         }
+
+        return question
       })
     )
   }
 
 
-  const handleDragEnd = (event) => {
+  const cleanInvalidConditions = (
+    reorderedQuestions
+  ) => {
+    return reorderedQuestions.map(
+      (question, index) => {
+        if (!question.condition) {
+          return question
+        }
+
+        const sourceIndex =
+          reorderedQuestions.findIndex(
+            (item) =>
+              item.id ===
+              question.condition
+                .question_id
+          )
+
+        const sourceQuestion =
+          reorderedQuestions[
+            sourceIndex
+          ]
+
+        if (
+          sourceIndex === -1 ||
+          sourceIndex >= index ||
+          sourceQuestion?.type !==
+            "single_choice"
+        ) {
+          return {
+            ...question,
+            condition: null,
+          }
+        }
+
+        return question
+      }
+    )
+  }
+
+
+  const handleDragEnd = (
+    event
+  ) => {
     const { active, over } = event
 
     if (
@@ -196,45 +332,57 @@ function CreateSurvey() {
       const oldIndex =
         current.findIndex(
           (question) =>
-            question.id === active.id
+            question.id ===
+            active.id
         )
 
       const newIndex =
         current.findIndex(
           (question) =>
-            question.id === over.id
+            question.id ===
+            over.id
         )
 
-      return arrayMove(
-        current,
-        oldIndex,
-        newIndex
+      const reordered =
+        arrayMove(
+          current,
+          oldIndex,
+          newIndex
+        )
+
+      return cleanInvalidConditions(
+        reordered
       )
     })
   }
 
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = async (
+    event
+  ) => {
     event.preventDefault()
 
     setError("")
-    setLoading(true)
+    setSaving(true)
 
     try {
       const cleanedQuestions =
-        questions.map((question) => ({
-          ...question,
+        questions.map(
+          (question) => ({
+            ...question,
 
-          options: question.options
-            ? question.options.filter(
-                (option) =>
-                  option.trim() !== ""
-              )
-            : null,
-        }))
+            options:
+              question.options
+                ? question.options.filter(
+                    (option) =>
+                      option.trim() !== ""
+                  )
+                : null,
+          })
+        )
 
-      await api.post(
-        "/admin/surveys",
+      await api.patch(
+        `/admin/surveys/${id}`,
         {
           title,
           description:
@@ -248,11 +396,65 @@ function CreateSurvey() {
     } catch (error) {
       setError(
         error.response?.data?.detail ||
-          "Failed to create survey"
+          "Failed to update survey"
       )
     } finally {
-      setLoading(false)
+      setSaving(false)
     }
+  }
+
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+        <div className="flex items-center gap-3">
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-200 border-t-blue-600" />
+
+          <p className="text-sm text-slate-500">
+            Loading survey...
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+
+  if (
+    error &&
+    questions.length === 0
+  ) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 px-6">
+
+        <div className="w-full max-w-md border border-red-200 bg-white p-7">
+
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-50 text-red-600">
+            <AlertIcon />
+          </div>
+
+          <h1 className="mt-4 text-lg font-semibold text-slate-900">
+            Survey unavailable
+          </h1>
+
+          <p className="mt-2 text-sm leading-6 text-red-600">
+            {error}
+          </p>
+
+          <button
+            type="button"
+            onClick={() =>
+              navigate("/admin")
+            }
+            className="mt-5 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700"
+          >
+            <BackIcon />
+            Back to surveys
+          </button>
+
+        </div>
+
+      </div>
+    )
   }
 
 
@@ -261,6 +463,7 @@ function CreateSurvey() {
 
       {/* Header */}
       <header className="border-b border-slate-200 bg-white">
+
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
 
           <div>
@@ -269,11 +472,11 @@ function CreateSurvey() {
             </p>
 
             <h1 className="mt-1 text-xl font-semibold tracking-tight text-slate-900">
-              Create survey
+              Edit survey
             </h1>
 
             <p className="mt-1 text-sm text-slate-500">
-              Build a survey and configure how each question behaves.
+              Update survey details, questions and conditional logic.
             </p>
           </div>
 
@@ -290,6 +493,7 @@ function CreateSurvey() {
           </button>
 
         </div>
+
       </header>
 
 
@@ -301,12 +505,13 @@ function CreateSurvey() {
           className="space-y-7"
         >
 
-          {/* Survey Details */}
           <SurveyDetails
             title={title}
             description={description}
             setTitle={setTitle}
-            setDescription={setDescription}
+            setDescription={
+              setDescription
+            }
           />
 
 
@@ -321,7 +526,7 @@ function CreateSurvey() {
                 </h2>
 
                 <p className="mt-1 text-sm text-slate-500">
-                  Add questions, choose input types and configure conditions.
+                  Update, reorder or add survey questions.
                 </p>
               </div>
 
@@ -340,7 +545,9 @@ function CreateSurvey() {
               collisionDetection={
                 closestCenter
               }
-              onDragEnd={handleDragEnd}
+              onDragEnd={
+                handleDragEnd
+              }
             >
 
               <SortableContext
@@ -356,19 +563,31 @@ function CreateSurvey() {
                 <div className="space-y-4">
 
                   {questions.map(
-                    (question, index) => (
+                    (
+                      question,
+                      index
+                    ) => (
 
                       <SortableQuestion
-                        key={question.id}
-                        question={question}
+                        key={
+                          question.id
+                        }
+                        question={
+                          question
+                        }
                       >
 
                         <QuestionCard
-                          question={question}
+                          question={
+                            question
+                          }
                           index={index}
-                          questions={questions}
+                          questions={
+                            questions
+                          }
                           canRemove={
-                            questions.length > 1
+                            questions.length >
+                            1
                           }
                           removeQuestion={
                             removeQuestion
@@ -402,7 +621,9 @@ function CreateSurvey() {
             {/* Add Question */}
             <button
               type="button"
-              onClick={addQuestion}
+              onClick={
+                addQuestion
+              }
               className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-blue-200 bg-blue-50/40 py-4 text-sm font-medium text-blue-600 transition hover:border-blue-300 hover:bg-blue-50"
             >
               <PlusIcon />
@@ -421,16 +642,17 @@ function CreateSurvey() {
               </div>
 
               <p>
-                {typeof error === "string"
+                {typeof error ===
+                "string"
                   ? error
-                  : "Failed to create survey"}
+                  : "Failed to update survey"}
               </p>
 
             </div>
           )}
 
 
-          {/* Bottom Action Bar */}
+          {/* Footer */}
           <div className="sticky bottom-4 z-20 flex items-center justify-between border border-slate-200 bg-white/95 px-5 py-4 shadow-lg backdrop-blur">
 
             <div className="flex items-center gap-2 text-sm text-slate-500">
@@ -460,18 +682,18 @@ function CreateSurvey() {
 
               <button
                 type="submit"
-                disabled={loading}
+                disabled={saving}
                 className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {loading ? (
+                {saving ? (
                   <>
                     <SpinnerIcon />
-                    Creating...
+                    Saving...
                   </>
                 ) : (
                   <>
                     <SaveIcon />
-                    Create survey
+                    Save changes
                   </>
                 )}
               </button>
@@ -625,4 +847,4 @@ function SpinnerIcon() {
 }
 
 
-export default CreateSurvey
+export default EditSurvey

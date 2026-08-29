@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom"
 
 import api from "../api/api"
 
+
 function Register() {
   const navigate = useNavigate()
 
@@ -11,6 +12,7 @@ function Register() {
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
 
+
   const handleSubmit = async (event) => {
     event.preventDefault()
 
@@ -18,10 +20,13 @@ function Register() {
     setLoading(true)
 
     try {
-      await api.post("/auth/register", {
-        email,
-        password,
-      })
+      await api.post(
+        "/auth/register",
+        {
+          email,
+          password,
+        }
+      )
 
       navigate("/login")
     } catch (error) {
@@ -34,80 +39,320 @@ function Register() {
     }
   }
 
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md rounded-xl bg-white p-8 shadow-sm">
-        <h1 className="text-2xl font-semibold">
-          Create Admin
-        </h1>
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-5 py-10">
 
-        <p className="mt-2 text-sm text-gray-500">
-          Create an admin account to manage surveys.
-        </p>
+      <div className="w-full max-w-md">
 
-        <form
-          onSubmit={handleSubmit}
-          className="mt-6 space-y-4"
-        >
-          <div>
-            <label className="mb-1 block text-sm font-medium">
-              Email
-            </label>
+        {/* Heading */}
+        <div className="mb-6 text-center">
 
-            <input
-              type="email"
-              value={email}
-              onChange={(event) =>
-                setEmail(event.target.value)
-              }
-              required
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-black"
-              placeholder="admin@example.com"
-            />
+          <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-lg bg-blue-600 text-white">
+            <UserPlusIcon />
           </div>
 
-          <div>
-            <label className="mb-1 block text-sm font-medium">
-              Password
-            </label>
+          <h1 className="mt-4 text-2xl font-semibold tracking-tight text-slate-900">
+            Create admin account
+          </h1>
 
-            <input
-              type="password"
-              value={password}
-              onChange={(event) =>
-                setPassword(event.target.value)
+          <p className="mt-2 text-sm text-slate-500">
+            Create an account to build and manage surveys.
+          </p>
+
+        </div>
+
+
+        {/* Card */}
+        <div className="border border-slate-200 bg-white px-6 py-6">
+
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-4"
+          >
+
+            {/* Email */}
+            <div>
+
+              <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                Email address
+              </label>
+
+              <div className="relative">
+
+                <div className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
+                  <MailIcon />
+                </div>
+
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(event) =>
+                    setEmail(
+                      event.target.value
+                    )
+                  }
+                  required
+                  autoComplete="email"
+                  placeholder="admin@example.com"
+                  className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-10 pr-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                />
+
+              </div>
+
+            </div>
+
+
+            {/* Password */}
+            <div>
+
+              <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                Password
+              </label>
+
+              <div className="relative">
+
+                <div className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
+                  <LockIcon />
+                </div>
+
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(event) =>
+                    setPassword(
+                      event.target.value
+                    )
+                  }
+                  required
+                  autoComplete="new-password"
+                  placeholder="••••••••"
+                  className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-10 pr-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                />
+
+              </div>
+
+              <p className="mt-1.5 text-xs text-slate-400">
+                Choose a secure password for your admin account.
+              </p>
+
+            </div>
+
+
+            {/* Error */}
+            {error && (
+              <div className="flex items-start gap-2 border border-red-200 bg-red-50 px-3.5 py-3 text-sm text-red-600">
+
+                <div className="mt-0.5 shrink-0">
+                  <AlertIcon />
+                </div>
+
+                <p>
+                  {error}
+                </p>
+
+              </div>
+            )}
+
+
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {loading ? (
+                <>
+                  <SpinnerIcon />
+                  Creating account...
+                </>
+              ) : (
+                <>
+                  <UserPlusSmallIcon />
+                  Create account
+                </>
+              )}
+            </button>
+
+          </form>
+
+
+          <div className="my-5 border-t border-slate-200" />
+
+
+          <p className="text-center text-sm text-slate-500">
+            Already have an admin account?{" "}
+            <button
+              type="button"
+              onClick={() =>
+                navigate("/login")
               }
-              required
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-black"
-              placeholder="••••••••"
-            />
-          </div>
+              className="font-medium text-blue-600 transition hover:text-blue-700"
+            >
+              Sign in
+            </button>
+          </p>
 
-          {error && (
-            <p className="text-sm text-red-600">
-              {error}
-            </p>
-          )}
+        </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-lg bg-black px-4 py-2 text-white disabled:opacity-50"
-          >
-            {loading ? "Creating..." : "Create Admin"}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => navigate("/login")}
-            className="w-full text-sm text-gray-500"
-          >
-            Already have an account? Login
-          </button>
-        </form>
       </div>
+
     </div>
   )
 }
+
+
+/* ---------------- SVG Icons ---------------- */
+
+function UserPlusIcon() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M19 8v6" />
+      <path d="M22 11h-6" />
+    </svg>
+  )
+}
+
+
+function UserPlusSmallIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M15 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="8.5" cy="7" r="4" />
+      <path d="M19 8v6" />
+      <path d="M22 11h-6" />
+    </svg>
+  )
+}
+
+
+function MailIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect
+        x="3"
+        y="5"
+        width="18"
+        height="14"
+        rx="2"
+      />
+      <path d="m3 7 9 6 9-6" />
+    </svg>
+  )
+}
+
+
+function LockIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect
+        x="4"
+        y="10"
+        width="16"
+        height="11"
+        rx="2"
+      />
+      <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+    </svg>
+  )
+}
+
+
+function AlertIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle
+        cx="12"
+        cy="12"
+        r="9"
+      />
+      <path d="M12 8v4" />
+      <path d="M12 16h.01" />
+    </svg>
+  )
+}
+
+
+function SpinnerIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      className="animate-spin"
+      aria-hidden="true"
+    >
+      <circle
+        cx="12"
+        cy="12"
+        r="9"
+        stroke="currentColor"
+        strokeWidth="3"
+        className="opacity-25"
+      />
+
+      <path
+        d="M21 12a9 9 0 0 0-9-9"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
 
 export default Register

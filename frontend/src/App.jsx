@@ -9,6 +9,7 @@ import Admin from "./pages/Admin"
 import Login from "./pages/Login"
 import Register from "./pages/Register"
 import CreateSurvey from "./pages/CreateSurvey"
+import EditSurvey from "./pages/EditSurvey"
 import PublicSurvey from "./pages/PublicSurvey"
 import Analytics from "./pages/Analytics"
 import ProtectedRoute from "./components/ProtectedRoute"
@@ -52,20 +53,19 @@ function App() {
         />
 
         <Route
+            path="/admin/surveys/:id/edit"
+            element={
+                <ProtectedRoute>
+                <EditSurvey />
+                </ProtectedRoute>
+            }
+        />
+
+        <Route
             path="/survey/:id"
             element={<PublicSurvey />}
         />
 
-        <Route
-          path="/admin/surveys/:id/edit"
-          element={
-            <ProtectedRoute>
-              <div className="p-8">
-                Edit Survey Page
-              </div>
-            </ProtectedRoute>
-          }
-        />
 
         <Route
             path="/admin/surveys/:id/analytics"
